@@ -3,6 +3,6 @@
     "node_modules"
   ],
   "delay": "3",
-  "exec": "npx ts-node ./src/app.ts",
+  "exec": "ts-node ./src/app.ts",
   "ext": "ts, js"
 }
