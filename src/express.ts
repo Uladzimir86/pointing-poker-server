@@ -14,13 +14,11 @@ app
   .route('/player-cards')
   .get((req, res) => {
     res.json(playerCards);
-    console.dir('playerCard')
   })
   .post((req, res) => {
     const playerCard = req.body;
     const id = playerCards.length;
     playerCards.push({...playerCard, id});
-    // console.dir(playerCard)
     res.json(playerCards);
   })
   .delete((req, res) => {
