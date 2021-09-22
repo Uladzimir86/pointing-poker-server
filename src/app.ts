@@ -47,8 +47,10 @@ async function countResult(issue: number): Promise<string[] | undefined> {
     statistic.set(issue, resultArr);
     return resultArr
   }
+  counterReady = false;
   return undefined;
 }
+
 
 webSocketServer.on('connection', (ws) => {
   ws.on('message', (m: string): void => {
@@ -110,7 +112,7 @@ webSocketServer.on('connection', (ws) => {
           countResult(issue).
           then((res) => {
             if(res) {console.dir(res)
-              // sendDataToPlayers({ type: c.SET_LOCATION, location: '/game' });
+              sendDataToPlayers({ type: c.SET_ROUND_RESULT, issue, statistic: res, score: results.get(issue) });
             }
           })
         }
