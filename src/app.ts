@@ -20,6 +20,8 @@ const results = new Map();
 const sockets = new Map();
 const statistic = new Map();
 
+let masterIsPlayer = false;
+
 function sendDataToPlayers(data: any) {
   if (sockets.size) sockets.forEach((socket) => {
     socket.send(JSON.stringify(data));
@@ -40,9 +42,10 @@ async function countResult(issue: number): Promise<string[] | undefined> {
   if(!counterReady) {
     counterReady = true;
     const arr = Object.values(results.get(issue));
+    const master = masterIsPlayer ? 0 : 1;
     const resultArr = [];
     for (let i = 0; i < arrCards.length; i += 1) {
-      resultArr.push((arr.filter((item) => item === i).length/arr.length).toFixed(2))
+      resultArr.push((arr.filter((item) => item === i).length/(arr.length - master)).toFixed(2))
     }
     statistic.set(issue, resultArr);
     return resultArr
@@ -92,6 +95,7 @@ webSocketServer.on('connection', (ws) => {
         // arrIssues = issues;
         // gameSettings = settings;
         arrCards = settings.cardStorage;
+        masterIsPlayer = settings.scramMasterAsPlayer;
         sendDataToPlayers( {type: c.SET_SETTINGS, issues, settings});
         sendDataToPlayers({ type: c.SET_LOCATION, location: '/game' });
         break;
