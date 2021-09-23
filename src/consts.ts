@@ -9,3 +9,5 @@ export const START_GAME = 'START_GAME';
 export const SET_SETTINGS = 'SET_SETTINGS';
 export const SET_ROUND_RESULT = 'SET_ROUND_RESULT';
 export const SET_ROUND_START = 'SET_ROUND_START';
+export const RESTART_ROUND = 'RESTART_ROUND';
+export const RESTART_TIMER = 'RESTART_TIMER';
