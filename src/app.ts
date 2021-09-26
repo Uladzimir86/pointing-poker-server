@@ -44,7 +44,6 @@ function deletePlayer(id: number, mes: string) {
 
 async function countResult(issue: string): Promise<number[] | undefined> {
   console.dir('countResult')
-  console.dir(counterReady)
   if (!counterReady) {
     counterReady = true;
     const arrIdVoteCards = Object.values(results.get(issue));
