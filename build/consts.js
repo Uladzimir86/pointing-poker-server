@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RESTART_TIMER = exports.RESTART_ROUND = exports.SET_ROUND_START = exports.SET_ROUND_RESULT = exports.SET_SETTINGS = exports.START_GAME = exports.CLOSE_SESSION = exports.CHECK_ID_SESSION = exports.SET_SESSION = exports.SET_LOCATION = exports.SET_PLAYERS = exports.DEL_PLAYER = exports.PUT_PLAYER = void 0;
+exports.PUT_PLAYER = 'PUT_PLAYER';
+exports.DEL_PLAYER = 'DEL_PLAYER';
+exports.SET_PLAYERS = 'SET_PLAYERS';
+exports.SET_LOCATION = 'SET_LOCATION';
+exports.SET_SESSION = 'SET_SESSION';
+exports.CHECK_ID_SESSION = 'CHECK_ID_SESSION';
+exports.CLOSE_SESSION = 'CLOSE_SESSION';
+exports.START_GAME = 'START_GAME';
+exports.SET_SETTINGS = 'SET_SETTINGS';
+exports.SET_ROUND_RESULT = 'SET_ROUND_RESULT';
+exports.SET_ROUND_START = 'SET_ROUND_START';
+exports.RESTART_ROUND = 'RESTART_ROUND';
+exports.RESTART_TIMER = 'RESTART_TIMER';
