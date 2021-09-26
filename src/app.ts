@@ -41,20 +41,21 @@ function deletePlayer(id: number, mes: string) {
   if (sockets.has(id)) sockets.get(id).close(1000, mes);
   sendDataToPlayers({ type: c.SET_PLAYERS, players });
 }
-async function countResult(issue: string): Promise<string[] | undefined> {
+
+async function countResult(issue: string): Promise<number[] | undefined> {
   console.dir('countResult')
   console.dir(counterReady)
   if (!counterReady) {
     counterReady = true;
-    const arr = Object.values(results.get(issue));
-    const master = masterIsPlayer ? 0 : 1;
+    const arrIdVoteCards = Object.values(results.get(issue));
+    
     const resultArr = [];
     for (let i = 0; i < arrCards.length; i += 1) {
       resultArr.push(
-        (
-          arr.filter((item) => item === i).length /
-          (arr.length - master)
-        ).toFixed(2)
+        Number((
+          100 * arrIdVoteCards.filter((item) => item === i).length /
+          (arrIdVoteCards.length)
+        ).toFixed(1))
       );
     }
     statistic.set(issue, resultArr);
@@ -88,6 +89,9 @@ webSocketServer.on('connection', (ws) => {
       issue: string;
       card: number;
     } = JSON.parse(m);
+
+    const master = masterIsPlayer ? 0 : 1;
+
     switch (type) {
       case c.SET_SESSION:
         if (sockets.size !== 0) {
@@ -145,11 +149,14 @@ webSocketServer.on('connection', (ws) => {
         sendDataToPlayers({ type: c.RESTART_TIMER, issue });
         break;
       case c.SET_ROUND_RESULT:
+        
         console.dir('SET_ROUND_RESULT');
-        results.set(issue, { ...results.get(issue), [playerId]: card }); 
-        if (Object.keys(results.get(issue)).length === 1){
+        if (masterIsPlayer) results.set(issue, { ...results.get(issue), [playerId]: card }); 
+        if (!masterIsPlayer && players[0].id !== playerId) results.set(issue, { ...results.get(issue), [playerId]: card }); 
+          if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
           setTimeout(() => {
             countResult(issue).then((res) => {
+              
               if (res) {
                 sendDataToPlayers({
                   type: c.SET_ROUND_RESULT,
@@ -159,12 +166,11 @@ webSocketServer.on('connection', (ws) => {
                 })
               }
             })
-          }, 10000);}
-          if (
-          sockets.size === Object.keys(results.get(issue)).length &&
-          !counterReady
-        ) {
+          }, 15000);}
+          if (results.get(issue) &&
+          sockets.size === Object.keys(results.get(issue)).length + master ) {
           countResult(issue).then((res) => {
+            console.dir('sendDataToPlayers');
             if (res) {
               sendDataToPlayers({
                 type: c.SET_ROUND_RESULT,
@@ -181,6 +187,7 @@ webSocketServer.on('connection', (ws) => {
     }
   });
 });
+
 
 server.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
