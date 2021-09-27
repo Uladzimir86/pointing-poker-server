@@ -21,8 +21,10 @@ const sockets = new Map();
 const statistic = new Map();
 
 let masterIsPlayer = false;
+let master:(0 | 1)=1;
 
 function sendDataToPlayers(data: any) {
+
   if (sockets.size)
     sockets.forEach((socket) => {
       socket.send(JSON.stringify(data));
@@ -47,7 +49,7 @@ async function countResult(issue: string): Promise<number[] | undefined> {
   if (!counterReady) {
     counterReady = true;
     const arrIdVoteCards = Object.values(results.get(issue));
-    
+    console.dir(arrIdVoteCards)
     const resultArr = [];
     for (let i = 0; i < arrCards.length; i += 1) {
       resultArr.push(
@@ -63,8 +65,13 @@ async function countResult(issue: string): Promise<number[] | undefined> {
   counterReady = false;
   return undefined;
 }
+const setResults = (issue: string, playerId: number, card: number) => {
+  if (masterIsPlayer) results.set(issue, { ...results.get(issue), [playerId]: card }); 
+  if (!masterIsPlayer && players[0].id !== playerId) results.set(issue, { ...results.get(issue), [playerId]: card }); 
+}
 
 webSocketServer.on('connection', (ws) => {
+  console.dir('connection')
   ws.on('message', (m: string): void => {
 
     const {
@@ -89,7 +96,7 @@ webSocketServer.on('connection', (ws) => {
       card: number;
     } = JSON.parse(m);
 
-    const master = masterIsPlayer ? 0 : 1;
+  
 
     switch (type) {
       case c.SET_SESSION:
@@ -131,6 +138,7 @@ webSocketServer.on('connection', (ws) => {
       case c.START_GAME:
         arrCards = settings.cardStorage;
         masterIsPlayer = settings.scramMasterAsPlayer;
+        master = masterIsPlayer ? 0 : 1;
         sendDataToPlayers({ type: c.SET_SETTINGS, issues, settings });
         sendDataToPlayers({ type: c.SET_LOCATION, location: '/game' });
         break;
@@ -148,10 +156,9 @@ webSocketServer.on('connection', (ws) => {
         sendDataToPlayers({ type: c.RESTART_TIMER, issue });
         break;
       case c.SET_ROUND_RESULT:
-        
+        setResults(issue, playerId, card)
         console.dir('SET_ROUND_RESULT');
-        if (masterIsPlayer) results.set(issue, { ...results.get(issue), [playerId]: card }); 
-        if (!masterIsPlayer && players[0].id !== playerId) results.set(issue, { ...results.get(issue), [playerId]: card }); 
+       
           if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
           setTimeout(() => {
             countResult(issue).then((res) => {
