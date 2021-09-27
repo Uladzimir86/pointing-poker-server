@@ -160,23 +160,23 @@ webSocketServer.on('connection', (ws) => {
         setResults(issue, playerId, card)
         console.log('SET_ROUND_RESULT');
         console.log(results.get(issue));
-
+        console.log('master-',master);
        
-          if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
-          setTimeout(() => {
-            console.log('setTimeout')
-            countResult(issue).then((res) => {
-              console.log('setTimeout-', res)
-              if (res) {
-                sendDataToPlayers({
-                  type: c.SET_ROUND_RESULT,
-                  issue,
-                  statistic: res,
-                  score: results.get(issue),
-                })
-              }
-            })
-          }, 15000);}
+          // if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
+          // setTimeout(() => {
+          //   console.log('setTimeout')
+          //   countResult(issue).then((res) => {
+          //     console.log('setTimeout-', res)
+          //     if (res) {
+          //       sendDataToPlayers({
+          //         type: c.SET_ROUND_RESULT,
+          //         issue,
+          //         statistic: res,
+          //         score: results.get(issue),
+          //       })
+          //     }
+          //   })
+          // }, 15000);}
           if (results.get(issue) &&
           sockets.size === Object.keys(results.get(issue)).length + master ) {
           countResult(issue).then((res) => {
