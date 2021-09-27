@@ -50,6 +50,7 @@ async function countResult(issue: string): Promise<number[] | undefined> {
     counterReady = true;
     const arrIdVoteCards = Object.values(results.get(issue));
     console.log('countResult-',arrIdVoteCards)
+    console.log(results.get(issue));
     const resultArr = [];
     for (let i = 0; i < arrCards.length; i += 1) {
       resultArr.push(
@@ -158,6 +159,8 @@ webSocketServer.on('connection', (ws) => {
       case c.SET_ROUND_RESULT:
         setResults(issue, playerId, card)
         console.log('SET_ROUND_RESULT');
+        console.log(results.get(issue));
+
        
           if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
           setTimeout(() => {
