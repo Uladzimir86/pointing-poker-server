@@ -45,11 +45,11 @@ function deletePlayer(id: number, mes: string) {
 }
 
 async function countResult(issue: string): Promise<number[] | undefined> {
-  console.dir('countResult')
+  console.log('countResult')
   if (!counterReady) {
     counterReady = true;
     const arrIdVoteCards = Object.values(results.get(issue));
-    console.dir(arrIdVoteCards)
+    console.log('countResult-',arrIdVoteCards)
     const resultArr = [];
     for (let i = 0; i < arrCards.length; i += 1) {
       resultArr.push(
@@ -152,17 +152,18 @@ webSocketServer.on('connection', (ws) => {
         sendDataToPlayers({ type: c.SET_ROUND_START });
         break;
       case c.RESTART_TIMER:
-        console.dir('RESTART_TIMER');
+        console.log('RESTART_TIMER');
         sendDataToPlayers({ type: c.RESTART_TIMER, issue });
         break;
       case c.SET_ROUND_RESULT:
         setResults(issue, playerId, card)
-        console.dir('SET_ROUND_RESULT');
+        console.log('SET_ROUND_RESULT');
        
           if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
           setTimeout(() => {
+            console.log('setTimeout')
             countResult(issue).then((res) => {
-              
+              console.log('setTimeout-', res)
               if (res) {
                 sendDataToPlayers({
                   type: c.SET_ROUND_RESULT,
@@ -176,7 +177,7 @@ webSocketServer.on('connection', (ws) => {
           if (results.get(issue) &&
           sockets.size === Object.keys(results.get(issue)).length + master ) {
           countResult(issue).then((res) => {
-            console.dir('sendDataToPlayers');
+            console.log('sendDataToPlayers');
             if (res) {
               sendDataToPlayers({
                 type: c.SET_ROUND_RESULT,
