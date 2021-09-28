@@ -59,7 +59,7 @@ async function countResult(issue: string): Promise<number[] | undefined> {
     for (let i = 0; i < arrCards.length; i += 1) {
       resultArr.push(
         Number((
-          100 * arrIdVoteCards.filter((item) => item === i).length /
+          100 * arrIdVoteCards.filter((item: number) => item === i).length /
           (arrIdVoteCards.length)
         ).toFixed(1))
       );
