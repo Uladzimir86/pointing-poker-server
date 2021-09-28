@@ -49,7 +49,7 @@ function deletePlayer(id: number, mes: string) {
 async function countResult(issue: string): Promise<number[] | undefined> {
   console.log('countResult')
   if (!counterReady) {
-    counterReady = true;
+    // counterReady = true;
     results.set(issue, current)
     const arrIdVoteCards = results.get(issue);
     // const arrIdVoteCards = Object.values(results.get(issue));
@@ -67,7 +67,7 @@ async function countResult(issue: string): Promise<number[] | undefined> {
     statistic.set(issue, resultArr);
     return resultArr;
   }
-  counterReady = false;
+  // counterReady = false;
   return undefined;
 }
 const setResults = (issue: string, playerId: number, card: number) => {
