@@ -20,7 +20,8 @@ const results = new Map();
 const sockets = new Map();
 const statistic = new Map();
 
-let currentStatistic:number[] = [];
+let currentStatistic: number[] = [];
+let allStatistic: any[] = [];
 let currentScore: {[key: number]: number} = {};
 
 let masterIsPlayer = false;
@@ -51,8 +52,8 @@ async function countResult(issue: string): Promise<number[] | undefined> {
   console.log('countResult')
   // if (!counterReady) {
     // counterReady = true;
-    results.set(issue, currentStatistic)
-    const arrIdVoteCards = results.get(issue);
+    // results.set(issue, currentStatistic)
+    const arrIdVoteCards = [...currentStatistic];
     // const arrIdVoteCards = Object.values(results.get(issue));
     console.log('countResult-',arrIdVoteCards)
     console.log(results.get(issue));
@@ -149,6 +150,8 @@ webSocketServer.on('connection', (ws) => {
         else deletePlayer(playerId, 'Session closed...');
         break;
       case c.START_GAME:
+        // results.set(issue, {});
+        allStatistic = [];
         arrCards = settings.cardStorage;
         masterIsPlayer = settings.scramMasterAsPlayer;
         master = masterIsPlayer ? 0 : 1;
@@ -158,13 +161,14 @@ webSocketServer.on('connection', (ws) => {
       case c.SET_ROUND_START:
         currentStatistic = [];
         currentScore = {};
-        results.set(issue, {});
+        // results.set(issue, {});
         sendDataToPlayers({ type: c.SET_ROUND_START, issue });
         break;
       case c.RESTART_ROUND:
         currentStatistic = [];
         currentScore = {};
-        results.set(issue, {});
+        allStatistic.pop();
+        // results.set(issue, {});
         sendDataToPlayers({ type: c.RESTART_TIMER, issue });
         sendDataToPlayers({ type: c.SET_ROUND_START });
         break;
@@ -177,7 +181,7 @@ webSocketServer.on('connection', (ws) => {
         console.log('SET_ROUND_RESULT');
         console.log(results.get(issue));
         console.log('master-',master);
-        console.log('current-',currentStatistic);
+        console.log('sockets.size',sockets.size);
        
           // if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
           // setTimeout(() => {
@@ -199,11 +203,12 @@ webSocketServer.on('connection', (ws) => {
           countResult(issue).then((res) => {
             console.log('sendDataToPlayers');
             if (res) {
-              console.log('res',res)
+              allStatistic.push({resultsVote: res, idIssue: issue});
+              console.log('allStatistic',allStatistic)
               sendDataToPlayers({
                 type: c.SET_ROUND_RESULT,
                 issue,
-                statistic: res,
+                statistic: allStatistic,
                 score: currentScore,
               });
             }
