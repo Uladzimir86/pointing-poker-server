@@ -11,7 +11,7 @@ let players: IPlayer[] = [];
 // let arrIssues: any;
 let arrCards: any[];
 // let gameSettings: any;
-let counterReady = false;
+// let counterReady = false;
 const port = process.env.PORT || 4000;
 const server = http.createServer(app);
 const webSocketServer = new WebSocket.Server({ server });
@@ -20,7 +20,8 @@ const results = new Map();
 const sockets = new Map();
 const statistic = new Map();
 
-let current:number[] = [];
+let currentStatistic:number[] = [];
+let currentScore: {[key: number]: number} = {};
 
 let masterIsPlayer = false;
 let master:(0 | 1)=1;
@@ -48,9 +49,9 @@ function deletePlayer(id: number, mes: string) {
 
 async function countResult(issue: string): Promise<number[] | undefined> {
   console.log('countResult')
-  if (!counterReady) {
+  // if (!counterReady) {
     // counterReady = true;
-    results.set(issue, current)
+    results.set(issue, currentStatistic)
     const arrIdVoteCards = results.get(issue);
     // const arrIdVoteCards = Object.values(results.get(issue));
     console.log('countResult-',arrIdVoteCards)
@@ -66,14 +67,20 @@ async function countResult(issue: string): Promise<number[] | undefined> {
     }
     statistic.set(issue, resultArr);
     return resultArr;
-  }
+  // }
   // counterReady = false;
-  return undefined;
+  // return undefined;
 }
 const setResults = (issue: string, playerId: number, card: number) => {
-  if (masterIsPlayer) current.push(card); 
-  if (!masterIsPlayer && players[0].id !== playerId) current.push(card); 
-  console.log('current-', current)
+  if (masterIsPlayer) {
+    currentStatistic.push(card); 
+    currentScore[playerId] = card;
+  }
+  if (!masterIsPlayer && players[0].id !== playerId) {
+    currentStatistic.push(card);
+    currentScore[playerId] = card;
+  }
+  console.log('setResults-currentStatistic-', currentStatistic)
 }
 
 webSocketServer.on('connection', (ws) => {
@@ -149,12 +156,14 @@ webSocketServer.on('connection', (ws) => {
         sendDataToPlayers({ type: c.SET_LOCATION, location: '/game' });
         break;
       case c.SET_ROUND_START:
-        current = [];
+        currentStatistic = [];
+        currentScore = {};
         results.set(issue, {});
         sendDataToPlayers({ type: c.SET_ROUND_START, issue });
         break;
       case c.RESTART_ROUND:
-        current = [];
+        currentStatistic = [];
+        currentScore = {};
         results.set(issue, {});
         sendDataToPlayers({ type: c.RESTART_TIMER, issue });
         sendDataToPlayers({ type: c.SET_ROUND_START });
@@ -168,7 +177,7 @@ webSocketServer.on('connection', (ws) => {
         console.log('SET_ROUND_RESULT');
         console.log(results.get(issue));
         console.log('master-',master);
-        console.log('current-',current);
+        console.log('current-',currentStatistic);
        
           // if (results.get(issue) && Object.keys(results.get(issue)).length === 1){
           // setTimeout(() => {
@@ -186,7 +195,7 @@ webSocketServer.on('connection', (ws) => {
           //   })
           // }, 15000);}
           if (
-          sockets.size === current.length + master ) {
+          sockets.size === currentStatistic.length + master ) {
           countResult(issue).then((res) => {
             console.log('sendDataToPlayers');
             if (res) {
@@ -195,7 +204,7 @@ webSocketServer.on('connection', (ws) => {
                 type: c.SET_ROUND_RESULT,
                 issue,
                 statistic: res,
-                score: [{11111111: 1}],
+                score: currentScore,
               });
             }
           });
