@@ -28,7 +28,8 @@ let masterIsPlayer = false;
 let master:(0 | 1)=1;
 
 function sendDataToPlayers(data: any) {
-
+console.log(statistic, 'statistic')
+console.log(JSON.stringify(data), 'JSON.stringify(data)')
   if (sockets.size)
     sockets.forEach((socket) => {
       socket.send(JSON.stringify(data));
@@ -203,7 +204,8 @@ webSocketServer.on('connection', (ws) => {
           countResult(issue).then((res) => {
             console.log('sendDataToPlayers');
             if (res) {
-              allStatistic.push({resultsVote: res, idIssue: issue});
+              allStatistic.push([issue, res]);
+              // allStatistic.push({resultsVote: res, idIssue: issue});
               console.log('allStatistic',allStatistic)
               sendDataToPlayers({
                 type: c.SET_ROUND_RESULT,
