@@ -3,7 +3,6 @@ import WebSocket from 'ws';
 
 import app from './express';
 
-// import players from './players';
 import { IPlayer } from './interface';
 import * as c from './consts';
 
@@ -35,17 +34,31 @@ function closeSockets(currentSession: string) {
   if (rooms.has(currentSession) && rooms.get(currentSession).length)
   rooms.get(currentSession).forEach((socket: WebSocket) => {
       socket.close(1000, 'Scrum master leaved this session...');
+      sessions.delete(currentSession);
+      rooms.delete(currentSession);
+      players.delete(currentSession);
+      currentStatistic.delete(currentSession);
+      allStatistic.delete(currentSession);
+      currentScore.delete(currentSession);
     });
 }
-function deletePlayer(id: number, mes: string, currentSession: string) {
-  const findPlayerIndex = (): number =>
-    players.get(currentSession).findIndex((item: any) => item?.id === id);
-
+function deletePlayer(id: number, mes: string, currentSession: string, ws: WebSocket | null  = null ) {
+  const findPlayerIndex = (): number =>{
+    if (players.get(currentSession)) return players.get(currentSession).findIndex((item: any) => item?.id === id);
+    return -1
+  }
   const playerIndex = findPlayerIndex();  
   if (playerIndex >= 0) {
     rooms.get(currentSession)[playerIndex].close(1000, mes)
     rooms.get(currentSession).splice(playerIndex, 1);
     players.get(currentSession).splice(playerIndex, 1);
+  }
+  if (ws) {
+    const findIndexWS = (): number =>
+    rooms.get(currentSession).findIndex((item: any) => item === ws);
+    const indexWS = findIndexWS();
+    rooms.get(currentSession).splice(indexWS, 1);
+    if (players.get(currentSession)) players.get(currentSession).splice(indexWS, 1);
   }
   sendDataToPlayers({ type: c.SET_PLAYERS, players: players.get(currentSession)}, currentSession);
 }
@@ -197,6 +210,10 @@ webSocketServer.on('connection', (ws) => {
         break;
     }
   });
+  ws.on('close', () => {
+    if (rooms.get(currentSession) && ws === rooms.get(currentSession)[0]) closeSockets(currentSession)
+    if (rooms.get(currentSession) && ws !== rooms.get(currentSession)[0]) deletePlayer(0, '', currentSession, ws)
+  })
 });
 
 
