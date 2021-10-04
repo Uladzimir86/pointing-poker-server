@@ -10,13 +10,10 @@ const port = process.env.PORT || 4000;
 const server = http.createServer(app);
 const webSocketServer = new WebSocket.Server({ server });
 
-const results = new Map();
-const sockets = new Map();
-const statistic = new Map();
-
 const sessions = new Set();
 const rooms = new Map();
 const players = new Map();
+const sessionPlayers = new Map();
 
 const currentStatistic = new Map();
 const allStatistic = new Map();
@@ -28,7 +25,7 @@ function sendDataToPlayers(data: any, currentSession: string) {
   if (rooms.has(currentSession) && rooms.get(currentSession).length)
   rooms.get(currentSession).forEach((socket: WebSocket) => {
       socket.send(JSON.stringify(data));
-    });
+  });
 }
 function closeSockets(currentSession: string) {
   if (rooms.has(currentSession) && rooms.get(currentSession).length)
@@ -37,28 +34,36 @@ function closeSockets(currentSession: string) {
       sessions.delete(currentSession);
       rooms.delete(currentSession);
       players.delete(currentSession);
+      sessionPlayers.delete(currentSession);
       currentStatistic.delete(currentSession);
       allStatistic.delete(currentSession);
       currentScore.delete(currentSession);
     });
 }
 function deletePlayer(id: number, mes: string, currentSession: string, ws: WebSocket | null  = null ) {
-  const findPlayerIndex = (): number =>{
-    if (players.get(currentSession)) return players.get(currentSession).findIndex((item: any) => item?.id === id);
+  const findPlayerIndex = (arr: any): number =>{
+    if (arr) return arr.findIndex((item: any) => item?.id === id);
     return -1
   }
-  const playerIndex = findPlayerIndex();  
-  if (playerIndex >= 0) {
-    rooms.get(currentSession)[playerIndex].close(1000, mes)
-    rooms.get(currentSession).splice(playerIndex, 1);
-    players.get(currentSession).splice(playerIndex, 1);
+  const sessionPlayerIndex = findPlayerIndex(rooms.get(currentSession));  
+  if (sessionPlayerIndex >= 0) {
+    rooms.get(currentSession)[sessionPlayerIndex].close(1000, mes)
+    rooms.get(currentSession).splice(sessionPlayerIndex, 1);
+    sessionPlayers.get(currentSession).splice(sessionPlayerIndex, 1);
+
+  const playerIndex = findPlayerIndex(players.get(currentSession));  
+    if (playerIndex >= 0)  players.get(currentSession).splice(playerIndex, 1);
   }
   if (ws) {
     const findIndexWS = (): number =>
     rooms.get(currentSession).findIndex((item: any) => item === ws);
     const indexWS = findIndexWS();
     rooms.get(currentSession).splice(indexWS, 1);
-    if (players.get(currentSession)) players.get(currentSession).splice(indexWS, 1);
+    if (sessionPlayers.get(currentSession)) {
+      const idPlayer = sessionPlayers.get(currentSession)[indexWS]?.id;
+      if (players.get(currentSession).findIndex((item: any) => item?.id === idPlayer) >= 0) players.get(currentSession).splice(players.get(currentSession).findIndex((item: any) => item?.id === idPlayer), 1);
+      sessionPlayers.get(currentSession).splice(indexWS, 1);
+    }
   }
   sendDataToPlayers({ type: c.SET_PLAYERS, players: players.get(currentSession)}, currentSession);
 }
@@ -69,7 +74,7 @@ async function countResult(currentSession: string, issue: string, arrCards: any)
     const arrIdVoteCards = [...currentStatistic.get(currentSession)];
 
     console.log('countResult-',arrIdVoteCards)
-    console.log(results.get(issue));
+   
     const resultArr = [];
     for (let i = 0; i < arrCards.length; i += 1) {
       resultArr.push(
@@ -79,7 +84,7 @@ async function countResult(currentSession: string, issue: string, arrCards: any)
         ).toFixed(1))
       );
     }
-    statistic.set(issue, resultArr);
+
     return resultArr;
 }
 
@@ -122,7 +127,6 @@ webSocketServer.on('connection', (ws) => {
       card: number;
     } = JSON.parse(m);
 
-  
 
     switch (type) {
       case c.SET_SESSION:
@@ -131,6 +135,7 @@ webSocketServer.on('connection', (ws) => {
           rooms.set(idSession, [ws]);
           currentSession = idSession;
           players.set(currentSession, [])
+          sessionPlayers.set(currentSession, [])
         break;
       case c.CHECK_ID_SESSION:
         console.log('idSession', idSession)
@@ -143,12 +148,17 @@ webSocketServer.on('connection', (ws) => {
         break;
       case c.PUT_PLAYER:
         players.get(currentSession).push(player);
-        sendDataToPlayers({ type: c.SET_PLAYERS, players: players.get(currentSession) }, currentSession);
+        sessionPlayers.get(currentSession).push(player);
+        sendDataToPlayers({ type: c.SET_PLAYERS, players: sessionPlayers.get(currentSession) }, currentSession);
         break;
       case c.DEL_PLAYER:
         if (rooms.get(currentSession)[0] === ws)
           {console.log('deletePlayer')
             deletePlayer(playerId, 'scrum master deleted you from session', currentSession);}
+        break;
+      case 'PUT_OBSERVER':
+        sessionPlayers.get(currentSession).push(player);
+        sendDataToPlayers({ type: c.SET_PLAYERS, players: sessionPlayers.get(currentSession) }, currentSession);
         break;
       case c.SET_LOCATION:
         ws.send(JSON.stringify({ type: c.SET_LOCATION, location }));
@@ -160,7 +170,7 @@ webSocketServer.on('connection', (ws) => {
       case c.START_GAME:
 
         allStatistic.set(currentSession, []);
-
+        sendDataToPlayers({ type: c.SET_PLAYERS, players: players.get(currentSession) }, currentSession);
         sendDataToPlayers({ type: c.SET_SETTINGS, issues, settings }, currentSession);
         sendDataToPlayers({ type: c.SET_LOCATION, location: '/game' }, currentSession);
         break;
@@ -174,7 +184,7 @@ webSocketServer.on('connection', (ws) => {
         currentStatistic.set(currentSession, []);
         currentScore.set(currentSession, {});
         allStatistic.get(currentSession).pop();
-        // results.set(issue, {});
+
         sendDataToPlayers({ type: c.RESTART_TIMER, issue }, currentSession);
         sendDataToPlayers({ type: c.SET_ROUND_START }, currentSession);
         break;
@@ -185,12 +195,12 @@ webSocketServer.on('connection', (ws) => {
       case c.SET_ROUND_RESULT:
         setResults(currentSession, playerId, card, settings.scramMasterAsPlayer)
         console.log('SET_ROUND_RESULT');
-        console.log(results.get(issue));
-
-        console.log('sockets.size',sockets.size);
-
+        console.log('players.get(currentSession)', players.get(currentSession));
+        console.log('currentStatistic.get(currentSession)', currentStatistic.get(currentSession));
+        console.log('sessionPlayers.get(currentSession)', sessionPlayers.get(currentSession));
+    
         if (
-          rooms.get(currentSession)?.length === currentStatistic.get(currentSession)?.length + Number(!settings.scramMasterAsPlayer) ) {
+          players.get(currentSession)?.length === currentStatistic.get(currentSession)?.length + Number(!settings.scramMasterAsPlayer) ) {
           countResult(currentSession, issue, settings.cardStorage).then((res) => {
             console.log('sendDataToPlayers');
             if (res) {
