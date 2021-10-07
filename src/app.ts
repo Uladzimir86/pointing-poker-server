@@ -185,7 +185,7 @@ webSocketServer.on('connection', (ws) => {
                 });
               }
             });
-          }, 15000);
+          }, 13000);
         }
         if (
           results.get(issue) &&
