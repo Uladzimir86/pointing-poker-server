@@ -16,3 +16,8 @@ export interface IIssue {
   priority?: 'low' | 'medium' | 'high'
   number?: string
 }
+
+export interface IChatData {
+  userName: string
+  msg: string
+}
