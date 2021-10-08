@@ -13,7 +13,7 @@ const webSocketServer = new WebSocket.Server({ server });
 const sessions = new Set();
 const rooms = new Map();
 const players = new Map();
-const sessionPlayers = new Map();
+const sessionPlayers = new Map(); // all users
 
 const currentStatistic = new Map();
 const allStatistic = new Map();
@@ -48,14 +48,9 @@ function deletePlayer(
     if (arr) return arr.findIndex((item: any) => item?.id === id);
     return -1;
   };
-  const sessionPlayerIndex = findPlayerIndex(rooms.get(currentSession));
+  const sessionPlayerIndex = findPlayerIndex(sessionPlayers.get(currentSession));
   if (sessionPlayerIndex >= 0) {
     rooms.get(currentSession)[sessionPlayerIndex].close(1000, mes);
-    rooms.get(currentSession).splice(sessionPlayerIndex, 1);
-    sessionPlayers.get(currentSession).splice(sessionPlayerIndex, 1);
-
-    const playerIndex = findPlayerIndex(players.get(currentSession));
-    if (playerIndex >= 0) players.get(currentSession).splice(playerIndex, 1);
   }
   if (ws) {
     const findIndexWS = (): number =>
