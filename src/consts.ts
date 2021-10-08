@@ -12,3 +12,5 @@ export const SET_ROUND_START = 'SET_ROUND_START';
 export const RESTART_ROUND = 'RESTART_ROUND';
 export const RESTART_TIMER = 'RESTART_TIMER';
 export const UPDATE_CHAT = 'UPDATE_CHAT';
+export const PUT_OBSERVER = 'PUT_OBSERVER';
+export const STOP_GAME = 'STOP_GAME';
